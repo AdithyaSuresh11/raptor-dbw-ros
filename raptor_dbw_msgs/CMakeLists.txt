@@ -47,6 +47,7 @@ add_message_files(DIRECTORY msg FILES
   DoorState.msg
   HighBeamState.msg
   HornState.msg
+  test.msg
 )
 
 generate_messages(DEPENDENCIES

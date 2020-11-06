@@ -6,7 +6,7 @@
     <remap from="can_rx" to="/can0/can_tx" />
   </node>
 
-  <arg name="can_hardware_id" default="18291" />
+  <arg name="can_hardware_id" default="46358" />
   <arg name="can_circuit_id" default="0" />
   <arg name="can_bit_rate" default="500000" />
 

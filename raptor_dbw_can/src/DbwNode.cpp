@@ -35,6 +35,7 @@
 
 #include "DbwNode.h"
 #include <raptor_dbw_can/dispatch.h>
+#include <iostream>
 
 namespace raptor_dbw_can
 {
@@ -72,17 +73,6 @@ DbwNode::DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
   // Buttons (enable/disable)
   buttons_ = true;
   priv_nh.getParam("buttons", buttons_);
-
-
-  // Ackermann steering parameters
-  acker_wheelbase_ = 2.8498; // 112.2 inches
-  acker_track_ = 1.5824; // 62.3 inches
-  steering_ratio_ = 14.8;
-  priv_nh.getParam("ackermann_wheelbase", acker_wheelbase_);
-  priv_nh.getParam("ackermann_track", acker_track_);
-  priv_nh.getParam("steering_ratio", steering_ratio_);
-
-  // Initialize joint states
   joint_state_.position.resize(JOINT_COUNT);
   joint_state_.velocity.resize(JOINT_COUNT);
   joint_state_.effort.resize(JOINT_COUNT);
@@ -119,6 +109,7 @@ DbwNode::DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
   pub_driver_input_ = node.advertise<raptor_dbw_msgs::DriverInputReport>("driver_input_report", 2);
   pub_misc_ = node.advertise<raptor_dbw_msgs::MiscReport>("misc_report", 2);
   pub_sys_enable_ = node.advertise<std_msgs::Bool>("dbw_enabled", 1, true);
+  pub_test_ = node.advertise<raptor_dbw_msgs::test>("test_topic_pub", 1);
   publishDbwEnabled();
 
   // Set up Subscribers
@@ -131,6 +122,8 @@ DbwNode::DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
   sub_gear_ = node.subscribe("gear_cmd", 1, &DbwNode::recvGearCmd, this, ros::TransportHints().tcpNoDelay(true));
   sub_misc_ = node.subscribe("misc_cmd", 1, &DbwNode::recvMiscCmd, this, ros::TransportHints().tcpNoDelay(true));
   sub_global_enable_ = node.subscribe("global_enable_cmd", 1, &DbwNode::recvGlobalEnableCmd, this, ros::TransportHints().tcpNoDelay(true));
+  sub_test_ = node.subscribe("test_topic", 1, &DbwNode::testTxCAN, this, ros::TransportHints().tcpNoDelay(true));
+
 
   pdu1_relay_pub_ = node.advertise<pdu_msgs::RelayCommand>("/pduB/relay_cmd", 1000);
   count_ = 0;
@@ -138,7 +131,7 @@ DbwNode::DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
   dbwDbc_ = NewEagle::DbcBuilder().NewDbc(dbcFile_);
 
   // Set up Timer
-  timer_ = node.createTimer(ros::Duration(1 / 20.0), &DbwNode::timerCallback, this);
+  timer_ = node.createTimer(ros::Duration(1), &DbwNode::timerCallback, this);
 }
 
 DbwNode::~DbwNode()
@@ -366,6 +359,22 @@ void DbwNode::recvCAN(const can_msgs::Frame::ConstPtr& msg)
           out.wheel_pulses_per_rev  = message->GetSignal("DBW_WhlPulsesPerRev")->GetResult();
 
           pub_wheel_positions_.publish(out);
+        }
+      }
+      break;
+
+      case ID_TEST:
+      {
+         NewEagle::DbcMessage* message = dbwDbc_.GetMessageById(ID_TEST);
+        if (msg->dlc >= message->GetDlc()) {
+
+          message->SetFrame(msg);
+
+          raptor_dbw_msgs::test out;
+          out.test1  = message->GetSignal("test1")->GetResult();
+          out.test2 = message->GetSignal("test2")->GetResult();
+
+          pub_test_.publish(out);
         }
       }
       break;
@@ -744,6 +753,17 @@ void DbwNode::recvAcceleratorPedalCmd(const raptor_dbw_msgs::AcceleratorPedalCmd
     message->GetSignal("Akit_AccelPdlIgnoreDriverOvrd")->SetResult(1);
   }    
 
+  can_msgs::Frame frame = message->GetFrame();
+
+  pub_can_.publish(frame);
+}
+
+void DbwNode::testTxCAN(const raptor_dbw_msgs::test::ConstPtr& msg) {
+
+  NewEagle::DbcMessage* message = dbwDbc_.GetMessage("akit_test");
+  message->GetSignal("test1")->SetResult(msg->test1);
+  message->GetSignal("test2")->SetResult(msg->test2);
+  std::cout << "message sent to can" << std::endl;
   can_msgs::Frame frame = message->GetFrame();
 
   pub_can_.publish(frame);

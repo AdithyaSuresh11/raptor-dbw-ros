@@ -62,6 +62,7 @@
 #include <raptor_dbw_msgs/GlobalEnableCmd.h>
 #include <raptor_dbw_msgs/FaultActionsReport.h>
 #include <raptor_dbw_msgs/HmiGlobalEnableReport.h>
+#include <raptor_dbw_msgs/test.h>
 
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/JointState.h>
@@ -101,6 +102,7 @@ private:
   void recvGearCmd(const raptor_dbw_msgs::GearCmd::ConstPtr& msg);
   void recvMiscCmd(const raptor_dbw_msgs::MiscCmd::ConstPtr& msg);
   void recvGlobalEnableCmd(const raptor_dbw_msgs::GlobalEnableCmd::ConstPtr& msg);
+  void testTxCAN(const raptor_dbw_msgs::test::ConstPtr& msg);
 
   ros::Timer timer_;
   bool prev_enable_;
@@ -180,6 +182,7 @@ private:
   ros::Subscriber sub_gear_;
   ros::Subscriber sub_misc_;
   ros::Subscriber sub_global_enable_;
+  ros::Subscriber sub_test_;
 
   // Published topics
   ros::Publisher pub_can_;
@@ -204,6 +207,7 @@ private:
   ros::Publisher pub_steering_2_report_;
   ros::Publisher pub_fault_actions_report_;
   ros::Publisher pub_hmi_global_enable_report_;
+  ros::Publisher pub_test_;
 
   NewEagle::Dbc dbwDbc_;
   std::string dbcFile_;
