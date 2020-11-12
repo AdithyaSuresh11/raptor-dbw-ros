@@ -46,6 +46,7 @@
 #include <raptor_dbw_msgs/GearCmd.h>
 #include <raptor_dbw_msgs/MiscCmd.h>
 #include <raptor_dbw_msgs/GlobalEnableCmd.h>
+#include <raptor_dbw_msgs/SpaceDrive.h>
 
 namespace joystick_demo
 {
@@ -79,6 +80,7 @@ private:
   ros::Publisher pub_enable_;
   ros::Publisher pub_disable_;
   ros::Publisher pub_global_enable_;
+  ros::Publisher pub_spacedrive_;
 
   // Parameters
   bool ignore_; // Ignore driver overrides

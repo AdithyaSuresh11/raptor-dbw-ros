@@ -63,12 +63,13 @@ JoystickDemo::JoystickDemo(ros::NodeHandle &node, ros::NodeHandle &priv_nh) : co
   data_.joy_accelerator_pedal_valid = false;
   data_.joy_brake_valid = false;
 
-  pub_accelerator_pedal_ = node.advertise<raptor_dbw_msgs::AcceleratorPedalCmd>("accelerator_pedal_cmd", 1);
-  pub_brake_ = node.advertise<raptor_dbw_msgs::BrakeCmd>("brake_cmd", 1);
-  pub_misc_ = node.advertise<raptor_dbw_msgs::MiscCmd>("misc_cmd", 1);
-  pub_steering_ = node.advertise<raptor_dbw_msgs::SteeringCmd>("steering_cmd", 1);
-  pub_global_enable_ = node.advertise<raptor_dbw_msgs::GlobalEnableCmd>("global_enable_cmd", 1);
-  pub_gear_ = node.advertise<raptor_dbw_msgs::GearCmd>("gear_cmd", 1);
+  pub_spacedrive_ = node.advertise<raptor_dbw_msgs::SpaceDrive>("spacedrive", 1);
+  //pub_accelerator_pedal_ = node.advertise<raptor_dbw_msgs::AcceleratorPedalCmd>("accelerator_pedal_cmd", 1);
+  // pub_brake_ = node.advertise<raptor_dbw_msgs::BrakeCmd>("brake_cmd", 1);
+  // pub_misc_ = node.advertise<raptor_dbw_msgs::MiscCmd>("misc_cmd", 1);
+  // pub_steering_ = node.advertise<raptor_dbw_msgs::SteeringCmd>("steering_cmd", 1);
+  // pub_global_enable_ = node.advertise<raptor_dbw_msgs::GlobalEnableCmd>("global_enable_cmd", 1);
+  // pub_gear_ = node.advertise<raptor_dbw_msgs::GearCmd>("gear_cmd", 1);
   if (enable_) {
     pub_enable_ = node.advertise<std_msgs::Empty>("enable", 1);
     pub_disable_ = node.advertise<std_msgs::Empty>("disable", 1);
@@ -95,54 +96,68 @@ void JoystickDemo::cmdCallback(const ros::TimerEvent& event)
     }
   }
 
-  // Accelerator Pedal
-  raptor_dbw_msgs::AcceleratorPedalCmd accelerator_pedal_msg;
-  accelerator_pedal_msg.enable = true;
-  accelerator_pedal_msg.ignore = ignore_;
-  accelerator_pedal_msg.rolling_counter = counter_;
-  accelerator_pedal_msg.pedal_cmd = data_.accelerator_pedal_joy * 100;
-  accelerator_pedal_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::open_loop;
-  pub_accelerator_pedal_.publish(accelerator_pedal_msg);
+  
 
-  // Brake
-  raptor_dbw_msgs::BrakeCmd brake_msg;
-  brake_msg.enable = true;
-  brake_msg.rolling_counter = counter_;
-  brake_msg.pedal_cmd = data_.brake_joy * 100;
-  brake_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::open_loop;
-  pub_brake_.publish(brake_msg);
 
-  // Steering
-  raptor_dbw_msgs::SteeringCmd steering_msg;
-  steering_msg.enable = true;
-  steering_msg.ignore = ignore_;
-  steering_msg.rolling_counter = counter_;
-  steering_msg.angle_cmd = data_.steering_joy;
-  steering_msg.angle_velocity = svel_;
-  steering_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::closed_loop_actuator;
-  if (!data_.steering_mult) {
-    steering_msg.angle_cmd *= 0.5;
-  }
-  pub_steering_.publish(steering_msg);
+  // // Accelerator Pedal
+  // raptor_dbw_msgs::AcceleratorPedalCmd accelerator_pedal_msg;
+  // accelerator_pedal_msg.enable = true;
+  // accelerator_pedal_msg.ignore = ignore_;
+  // accelerator_pedal_msg.rolling_counter = counter_;
+  // accelerator_pedal_msg.pedal_cmd = data_.accelerator_pedal_joy * 100;
+  // accelerator_pedal_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::open_loop;
+  // pub_accelerator_pedal_.publish(accelerator_pedal_msg);
 
-  // Gear
-  raptor_dbw_msgs::GearCmd gear_msg;
-  gear_msg.cmd.gear = data_.gear_cmd;
-  gear_msg.enable = true;
-  gear_msg.rolling_counter = counter_;
-  pub_gear_.publish(gear_msg);
+  //SpaceDrive msg
+  raptor_dbw_msgs::SpaceDrive spacedrive_msg;
+  spacedrive_msg.counter = 1;
+  spacedrive_msg.brake_demand = data_.brake_joy * 100;
+  spacedrive_msg.gear_demand = 1;
+  spacedrive_msg.accelerator_demand = data_.accelerator_pedal_joy * 100;
+  spacedrive_msg.steering_demand = data_.steering_joy;
+  spacedrive_msg.trigger = 0;
+  spacedrive_msg.supervisor_input = 1;
+  pub_spacedrive_.publish(spacedrive_msg);
 
-  // Turn signal
-  raptor_dbw_msgs::MiscCmd misc_msg;
-  misc_msg.cmd.value = data_.turn_signal_cmd;
-  misc_msg.rolling_counter = counter_;
-  pub_misc_.publish(misc_msg);
+  // // Brake
+  // raptor_dbw_msgs::BrakeCmd brake_msg;
+  // brake_msg.enable = true;
+  // brake_msg.rolling_counter = counter_;
+  // brake_msg.pedal_cmd = data_.brake_joy * 100;
+  // brake_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::open_loop;
+  // pub_brake_.publish(brake_msg);
 
-  raptor_dbw_msgs::GlobalEnableCmd globalEnable_msg;
-  globalEnable_msg.global_enable = true;
-  globalEnable_msg.enable_joystick_limits = true;
-  globalEnable_msg.rolling_counter = counter_;
-  pub_global_enable_.publish(globalEnable_msg);
+  // // Steering
+  // raptor_dbw_msgs::SteeringCmd steering_msg;
+  // steering_msg.enable = true;
+  // steering_msg.ignore = ignore_;
+  // steering_msg.rolling_counter = counter_;
+  // steering_msg.angle_cmd = data_.steering_joy;
+  // steering_msg.angle_velocity = svel_;
+  // steering_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::closed_loop_actuator;
+  // if (!data_.steering_mult) {
+  //   steering_msg.angle_cmd *= 0.5;
+  // }
+  // pub_steering_.publish(steering_msg);
+
+  // // Gear
+  // raptor_dbw_msgs::GearCmd gear_msg;
+  // gear_msg.cmd.gear = data_.gear_cmd;
+  // gear_msg.enable = true;
+  // gear_msg.rolling_counter = counter_;
+  // pub_gear_.publish(gear_msg);
+
+  // // Turn signal
+  // raptor_dbw_msgs::MiscCmd misc_msg;
+  // misc_msg.cmd.value = data_.turn_signal_cmd;
+  // misc_msg.rolling_counter = counter_;
+  // pub_misc_.publish(misc_msg);
+
+  // raptor_dbw_msgs::GlobalEnableCmd globalEnable_msg;
+  // globalEnable_msg.global_enable = true;
+  // globalEnable_msg.enable_joystick_limits = true;
+  // globalEnable_msg.rolling_counter = counter_;
+  // pub_global_enable_.publish(globalEnable_msg);
 }
 
 void JoystickDemo::recvJoy(const sensor_msgs::Joy::ConstPtr& msg)
