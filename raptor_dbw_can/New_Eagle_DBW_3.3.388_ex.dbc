@@ -346,11 +346,11 @@ BO_ 2147491607 DBW_GpsRemainder: 8 DBW
  SG_ DBW_GpsRemainderLat : 0|24@1- (0.001,0) [-8388.607|8388.608] "m" Vector__XXX
  SG_ DBW_GpsRemainderLong : 32|24@1- (0.001,0) [-8388.607|8388.61] "m" Vector__XXX
 
-BO_ 1816 Test_dbw: 8 DBW
+BO_ 2147485464 Test_dbw: 8 DBW
  SG_ test1 : 0|32@1+ (1,0) [0|0] "" Vector__XXX
  SG_ test2 : 32|32@1+ (1,0) [0|0] "" Vector__XXX
 
-BO_ 1817 akit_test: 8 Vector__XXX
+BO_ 2147485465 akit_test: 8 Vector__XXX
  SG_ test1 : 0|32@1+ (1,0) [0|0] "" Vector__XXX
  SG_ test2 : 32|32@1+ (1,0) [0|0] "" Vector__XXX
 

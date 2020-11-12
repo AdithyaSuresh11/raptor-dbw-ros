@@ -77,6 +77,7 @@ enum {
   ID_FAULT_ACTION_REPORT        = 0x1F15,
   ID_HMI_GLOBAL_ENABLE_REPORT   = 0x3f01,
   ID_TEST                       = 0x0718,
+  ID_SP_TEST                    = 0x0090,
   };
 
 } //raptor_dbw_can

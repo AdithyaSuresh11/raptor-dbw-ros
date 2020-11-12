@@ -123,6 +123,7 @@ DbwNode::DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
   sub_misc_ = node.subscribe("misc_cmd", 1, &DbwNode::recvMiscCmd, this, ros::TransportHints().tcpNoDelay(true));
   sub_global_enable_ = node.subscribe("global_enable_cmd", 1, &DbwNode::recvGlobalEnableCmd, this, ros::TransportHints().tcpNoDelay(true));
   sub_test_ = node.subscribe("test_topic", 1, &DbwNode::testTxCAN, this, ros::TransportHints().tcpNoDelay(true));
+  sub_spacedrive_ = node.subscribe("spacedrive", 1, &DbwNode::recvSPcmd, this, ros::TransportHints().tcpNoDelay(true));
 
 
   pdu1_relay_pub_ = node.advertise<pdu_msgs::RelayCommand>("/pduB/relay_cmd", 1000);
@@ -763,6 +764,22 @@ void DbwNode::testTxCAN(const raptor_dbw_msgs::test::ConstPtr& msg) {
   NewEagle::DbcMessage* message = dbwDbc_.GetMessage("akit_test");
   message->GetSignal("test1")->SetResult(msg->test1);
   message->GetSignal("test2")->SetResult(msg->test2);
+  //std::cout << "message sent to can" << std::endl;
+  can_msgs::Frame frame = message->GetFrame();
+
+  pub_can_.publish(frame);
+}
+
+void DbwNode::recvSPcmd(const raptor_dbw_msgs::SpaceDrive::ConstPtr& msg) {
+
+  NewEagle::DbcMessage* message = dbwDbc_.GetMessage("Space_Drive");
+  message->GetSignal("Vehicle_Speed")->SetResult(msg->accelerator_demand);
+  message->GetSignal("Trigger")->SetResult(msg->trigger);
+  message->GetSignal("Supervisor_Input_Cmd")->SetResult(msg->supervisor_input);
+  message->GetSignal("Counter")->SetResult(msg->counter);
+  message->GetSignal("Brake")->SetResult(msg->brake_demand);
+  message->GetSignal("Steering")->SetResult(msg->steering_demand);
+  message->GetSignal("Gear")->SetResult(msg->gear_demand);
   std::cout << "message sent to can" << std::endl;
   can_msgs::Frame frame = message->GetFrame();
 

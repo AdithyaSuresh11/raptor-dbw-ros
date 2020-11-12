@@ -1,0 +1,7 @@
+float32 brake_demand
+float32 accelerator_demand
+float32 steering_demand
+float32 gear_demand
+int32 trigger
+int32 supervisor_input
+int32 counter

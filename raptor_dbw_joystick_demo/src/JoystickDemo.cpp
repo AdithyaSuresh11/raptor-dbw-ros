@@ -152,10 +152,10 @@ void JoystickDemo::recvJoy(const sensor_msgs::Joy::ConstPtr& msg)
     ROS_ERROR("Expected %zu joy axis count, received %zu", (size_t)AXIS_COUNT, msg->axes.size());
     return;
   }
-  if (msg->buttons.size() != (size_t)BTN_COUNT) {
-    ROS_ERROR("Expected %zu joy button count, received %zu", (size_t)BTN_COUNT, msg->buttons.size());
-    return;
-  }
+  //if (msg->buttons.size() != (size_t)BTN_COUNT) {
+    //ROS_ERROR("Expected %zu joy button count, received %zu", (size_t)BTN_COUNT, msg->buttons.size());
+    //return;
+  //}
 
   // Handle joystick startup
   if (msg->axes[AXIS_ACCELERATOR_PEDAL] != 0.0) {

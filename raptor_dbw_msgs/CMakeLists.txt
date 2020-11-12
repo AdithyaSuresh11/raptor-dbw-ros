@@ -48,6 +48,7 @@ add_message_files(DIRECTORY msg FILES
   HighBeamState.msg
   HornState.msg
   test.msg
+  SpaceDrive.msg
 )
 
 generate_messages(DEPENDENCIES

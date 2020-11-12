@@ -63,6 +63,7 @@
 #include <raptor_dbw_msgs/FaultActionsReport.h>
 #include <raptor_dbw_msgs/HmiGlobalEnableReport.h>
 #include <raptor_dbw_msgs/test.h>
+#include <raptor_dbw_msgs/SpaceDrive.h>
 
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/JointState.h>
@@ -103,6 +104,7 @@ private:
   void recvMiscCmd(const raptor_dbw_msgs::MiscCmd::ConstPtr& msg);
   void recvGlobalEnableCmd(const raptor_dbw_msgs::GlobalEnableCmd::ConstPtr& msg);
   void testTxCAN(const raptor_dbw_msgs::test::ConstPtr& msg);
+  void recvSPcmd(const raptor_dbw_msgs::SpaceDrive::ConstPtr& msg);
 
   ros::Timer timer_;
   bool prev_enable_;
@@ -183,6 +185,7 @@ private:
   ros::Subscriber sub_misc_;
   ros::Subscriber sub_global_enable_;
   ros::Subscriber sub_test_;
+  ros::Subscriber sub_spacedrive_;
 
   // Published topics
   ros::Publisher pub_can_;
