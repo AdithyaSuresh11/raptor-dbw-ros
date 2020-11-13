@@ -111,10 +111,10 @@ void JoystickDemo::cmdCallback(const ros::TimerEvent& event)
   //SpaceDrive msg
   raptor_dbw_msgs::SpaceDrive spacedrive_msg;
   spacedrive_msg.counter = 1;
-  spacedrive_msg.brake_demand = data_.brake_joy * 100;
+  spacedrive_msg.brake_demand = (data_.brake_joy * 100 * -53.84) + 16384;
   spacedrive_msg.gear_demand = 1;
   spacedrive_msg.accelerator_demand = data_.accelerator_pedal_joy * 100;
-  spacedrive_msg.steering_demand = data_.steering_joy;
+  spacedrive_msg.steering_demand = 2000 * (data_.steering_joy + 8.21);
   spacedrive_msg.trigger = 0;
   spacedrive_msg.supervisor_input = 1;
   pub_spacedrive_.publish(spacedrive_msg);
