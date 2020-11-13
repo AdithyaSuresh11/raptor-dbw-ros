@@ -34,6 +34,7 @@
  *********************************************************************/
 
 #include "JoystickDemo.h"
+#include <iostream>
 
 namespace joystick_demo
 {
@@ -62,6 +63,7 @@ JoystickDemo::JoystickDemo(ros::NodeHandle &node, ros::NodeHandle &priv_nh) : co
   data_.turn_signal_cmd = raptor_dbw_msgs::TurnSignal::NONE;
   data_.joy_accelerator_pedal_valid = false;
   data_.joy_brake_valid = false;
+  data_.supervisor1 = 0;
 
   pub_spacedrive_ = node.advertise<raptor_dbw_msgs::SpaceDrive>("spacedrive", 1);
   //pub_accelerator_pedal_ = node.advertise<raptor_dbw_msgs::AcceleratorPedalCmd>("accelerator_pedal_cmd", 1);
@@ -95,10 +97,7 @@ void JoystickDemo::cmdCallback(const ros::TimerEvent& event)
       counter_ = 0;
     }
   }
-
   
-
-
   // // Accelerator Pedal
   // raptor_dbw_msgs::AcceleratorPedalCmd accelerator_pedal_msg;
   // accelerator_pedal_msg.enable = true;
@@ -116,7 +115,7 @@ void JoystickDemo::cmdCallback(const ros::TimerEvent& event)
   spacedrive_msg.accelerator_demand = data_.accelerator_pedal_joy * 100;
   spacedrive_msg.steering_demand = 2000 * (data_.steering_joy + 8.21);
   spacedrive_msg.trigger = 0;
-  spacedrive_msg.supervisor_input = 1;
+  spacedrive_msg.supervisor_input = data_.supervisor1;
   pub_spacedrive_.publish(spacedrive_msg);
 
   // // Brake
@@ -167,41 +166,53 @@ void JoystickDemo::recvJoy(const sensor_msgs::Joy::ConstPtr& msg)
     ROS_ERROR("Expected %zu joy axis count, received %zu", (size_t)AXIS_COUNT, msg->axes.size());
     return;
   }
-  //if (msg->buttons.size() != (size_t)BTN_COUNT) {
-    //ROS_ERROR("Expected %zu joy button count, received %zu", (size_t)BTN_COUNT, msg->buttons.size());
-    //return;
-  //}
+  // if (msg->buttons.size() != (size_t)BTN_COUNT) {
+  //   ROS_ERROR("Expected %zu joy button count, received %zu", (size_t)BTN_COUNT, msg->buttons.size());
+  //   return;
+  // }
 
   // Handle joystick startup
   if (msg->axes[AXIS_ACCELERATOR_PEDAL] != 0.0) {
     data_.joy_accelerator_pedal_valid = true;
   }
-  if (msg->axes[AXIS_BRAKE] != 0.0) {
+  // if (msg->axes[AXIS_BRAKE] != 0.0) {
+  //   data_.joy_brake_valid = true;
+  // }
+
+  if (msg->buttons[0] != 0.0) data_.supervisor1 = 1;
+  if (msg->buttons[3] != 0.0) data_.supervisor1 = 2;
+  if (msg->buttons[4] != 0.0) data_.supervisor1 = 3;
+  if (msg->buttons[1] != 0.0) data_.supervisor1 = 4;
+  if (msg->buttons[7] != 0.0) data_.supervisor1 = 0;
+
+
+  if (msg->axes[5] != 0.0) {
     data_.joy_brake_valid = true;
   }
 
   // Accelerator pedal
   if (data_.joy_accelerator_pedal_valid) {
-    data_.accelerator_pedal_joy = 0.5 - 0.5 * msg->axes[AXIS_ACCELERATOR_PEDAL];
+    //data_.accelerator_pedal_joy = 0.5 - 0.5 * msg->axes[AXIS_ACCELERATOR_PEDAL];
   }
 
   // Brake
   if (data_.joy_brake_valid) {
-    data_.brake_joy = 0.5 - 0.5 * msg->axes[AXIS_BRAKE];
+    // data_.brake_joy = 0.5 - 0.5 * msg->axes[AXIS_BRAKE];
+    data_.brake_joy = 0.5 - 0.5 * msg->axes[5]; // for bluetooth implementation
   }
 
   // Gear
-  if (msg->buttons[BTN_PARK]) {
-    data_.gear_cmd = raptor_dbw_msgs::Gear::PARK;
-  } else if (msg->buttons[BTN_REVERSE]) {
-    data_.gear_cmd = raptor_dbw_msgs::Gear::REVERSE;
-  } else if (msg->buttons[BTN_DRIVE]) {
-    data_.gear_cmd = raptor_dbw_msgs::Gear::DRIVE;
-  } else if (msg->buttons[BTN_NEUTRAL]) {
-    data_.gear_cmd = raptor_dbw_msgs::Gear::NEUTRAL;
-  } else {
-    data_.gear_cmd = raptor_dbw_msgs::Gear::NONE;
-  }
+  // if (msg->buttons[BTN_PARK]) {
+  //   data_.gear_cmd = raptor_dbw_msgs::Gear::PARK;
+  // } else if (msg->buttons[BTN_REVERSE]) {
+  //   data_.gear_cmd = raptor_dbw_msgs::Gear::REVERSE;
+  // } else if (msg->buttons[BTN_DRIVE]) {
+  //   data_.gear_cmd = raptor_dbw_msgs::Gear::DRIVE;
+  // } else if (msg->buttons[BTN_NEUTRAL]) {
+  //   data_.gear_cmd = raptor_dbw_msgs::Gear::NEUTRAL;
+  // } else {
+  //   data_.gear_cmd = raptor_dbw_msgs::Gear::NONE;
+  // }
 
   // Steering
   data_.steering_joy = 470.0 * M_PI / 180.0 * ((fabs(msg->axes[AXIS_STEER_1]) > fabs(msg->axes[AXIS_STEER_2])) ? msg->axes[AXIS_STEER_1] : msg->axes[AXIS_STEER_2]);

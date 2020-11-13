@@ -61,6 +61,7 @@ typedef struct {
   int turn_signal_cmd;
   bool joy_accelerator_pedal_valid;
   bool joy_brake_valid;
+  int supervisor1;
 } JoystickDataStruct;
 
 class JoystickDemo {
