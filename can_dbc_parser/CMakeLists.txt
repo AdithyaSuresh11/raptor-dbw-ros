@@ -10,6 +10,8 @@ catkin_package(
     include
   LIBRARIES
     ${PROJECT_NAME}
+  INCLUDE
+    include/
 )
 
 include_directories(
