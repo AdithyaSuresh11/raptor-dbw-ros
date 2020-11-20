@@ -1,0 +1,53 @@
+VERSION "HIPBNYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY/4/%%%/4/'%**4YYY///"
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_:
+
+
+BO_ 1234 Comp_2_Raptor: 8 Vector__XXX
+ SG_ Demand_APP : 0|8@1+ (0.5,0) [0|90] "" Vector__XXX
+ SG_ Demand_Brake_Pressure : 8|16@1+ (6894,0) [0|2068200] "" Vector__XXX
+ SG_ Demand_SM_Angle : 24|16@1+ (0.1,-195) [-195|195] "" Vector__XXX
+ SG_ Actual_Velocity : 40|16@1+ (1,0) [0|400] "" Vector__XXX
+
+BO_ 1235 Raptor_2_Comp: 8 Vector__XXX
+ SG_ Actual_APP : 0|8@1+ (0.5,0) [0|90] "" Vector__XXX
+ SG_ Actual_Brake_pressure_Front : 8|16@1+ (6894,0) [0|2757600] "" Vector__XXX
+ SG_ Actual_SM_angle : 40|16@1+ (0.1,-195) [-195|195] "" Vector__XXX
+ SG_ Actual_Brake_pressure_Rear : 24|16@1+ (6894,0) [0|2757600] "" Vector__XXX
+
+
+
+

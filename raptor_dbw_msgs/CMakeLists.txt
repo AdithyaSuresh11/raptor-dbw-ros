@@ -9,6 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_message_files(DIRECTORY msg FILES
   AcceleratorPedalCmd.msg
+  ##Actual_signals.msg
+  Actual_signals_sp.msg
+  Actual_signals_hil.msg
   AcceleratorPedalReport.msg
   ActuatorControlMode.msg
   Brake2Report.msg
@@ -47,6 +50,8 @@ add_message_files(DIRECTORY msg FILES
   DoorState.msg
   HighBeamState.msg
   HornState.msg
+  test.msg
+  SpaceDrive.msg
 )
 
 generate_messages(DEPENDENCIES

@@ -1,0 +1,5 @@
+float32 brake_demand
+float32 accelerator_demand
+float32 steering_demand
+float32 actual_velocity
+

@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   raptor_dbw_msgs
+  do12_custom_msgs
 )
 
 catkin_package()

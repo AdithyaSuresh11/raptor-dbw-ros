@@ -62,6 +62,15 @@
 #include <raptor_dbw_msgs/GlobalEnableCmd.h>
 #include <raptor_dbw_msgs/FaultActionsReport.h>
 #include <raptor_dbw_msgs/HmiGlobalEnableReport.h>
+#include <raptor_dbw_msgs/test.h>
+#include <raptor_dbw_msgs/SpaceDrive.h>
+#include <raptor_dbw_msgs/Actual_signals_hil.h>
+#include <raptor_dbw_msgs/Actual_signals_sp.h>
+#include <do12_custom_msgs/actuator_signals.h>
+#include <do12_custom_msgs/SpaceDrive.h>
+
+// THIS CUSTOM MESSAGE IS USED FOR THE SP TEST IN LINE 73
+#include <do12_custom_msgs/Actual_signals_sp.h>
 
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/JointState.h>
@@ -87,6 +96,8 @@ class DbwNode
 public:
   DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh);
   ~DbwNode();
+  // THE DBWNODE CLASS HAS THE INTEGER FLAG INITIALISED TO '0'
+  int flag = 0;
 
 private:
   void timerCallback(const ros::TimerEvent& event);
@@ -101,6 +112,10 @@ private:
   void recvGearCmd(const raptor_dbw_msgs::GearCmd::ConstPtr& msg);
   void recvMiscCmd(const raptor_dbw_msgs::MiscCmd::ConstPtr& msg);
   void recvGlobalEnableCmd(const raptor_dbw_msgs::GlobalEnableCmd::ConstPtr& msg);
+  void testTxCAN(const raptor_dbw_msgs::test::ConstPtr& msg);
+  // SUBSCRIBER FUNCTIONS FOR INITIALIZATION
+  void recvSPcmd(const do12_custom_msgs::Actual_signals_sp::ConstPtr& msg);
+  void recvSPJOYcmd(const do12_custom_msgs::Actual_signals_sp::ConstPtr& msg);
 
   ros::Timer timer_;
   bool prev_enable_;
@@ -180,6 +195,10 @@ private:
   ros::Subscriber sub_gear_;
   ros::Subscriber sub_misc_;
   ros::Subscriber sub_global_enable_;
+  ros::Subscriber sub_test_;
+  // SUBSCRIBERS USED FOR SP TESTING DEMONSTRATION
+  ros::Subscriber sub_spacedrive_;
+  ros::Subscriber sub_spacedrive_joy_;
 
   // Published topics
   ros::Publisher pub_can_;
@@ -199,11 +218,14 @@ private:
   ros::Publisher pub_sys_enable_;
   ros::Publisher pub_driver_input_;
   ros::Publisher pub_low_voltage_system_;
+  // PUBLISHER FOR SP TESTING DEMONSTRATION IN LINE 221
+  ros::Publisher pub_sp_;
 
   ros::Publisher pub_brake_2_report_;
   ros::Publisher pub_steering_2_report_;
   ros::Publisher pub_fault_actions_report_;
   ros::Publisher pub_hmi_global_enable_report_;
+  ros::Publisher pub_test_;
 
   NewEagle::Dbc dbwDbc_;
   std::string dbcFile_;

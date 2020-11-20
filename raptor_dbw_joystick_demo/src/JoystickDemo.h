@@ -46,6 +46,11 @@
 #include <raptor_dbw_msgs/GearCmd.h>
 #include <raptor_dbw_msgs/MiscCmd.h>
 #include <raptor_dbw_msgs/GlobalEnableCmd.h>
+#include <raptor_dbw_msgs/SpaceDrive.h>
+#include <raptor_dbw_msgs/Actual_signals_sp.h>
+
+// THIS IS THE MESSAGE USED FOR SP TESTING DEMONSTRATION
+#include <do12_custom_msgs/Actual_signals_sp.h>
 
 namespace joystick_demo
 {
@@ -60,6 +65,7 @@ typedef struct {
   int turn_signal_cmd;
   bool joy_accelerator_pedal_valid;
   bool joy_brake_valid;
+  int supervisor1;
 } JoystickDataStruct;
 
 class JoystickDemo {
@@ -79,6 +85,8 @@ private:
   ros::Publisher pub_enable_;
   ros::Publisher pub_disable_;
   ros::Publisher pub_global_enable_;
+  // PUBLISHER TOPIC FOR SP TESTING DEMONSTRATION
+  ros::Publisher pub_spacedrive_;
 
   // Parameters
   bool ignore_; // Ignore driver overrides

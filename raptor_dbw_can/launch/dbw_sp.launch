@@ -1,7 +1,8 @@
 <!-- -*- mode: XML -*- -->
 <launch>
   <node ns="vehicle" pkg="raptor_dbw_can" type="dbw_node" name="dbw" output="screen">
-    <param name="dbw_dbc_file" textfile="$(find raptor_dbw_can)/New_Eagle_DBW_3.3.388.dbc" />
+    <!--param name="dbw_dbc_file" textfile="$(find raptor_dbw_can)/DEB_HiL_3.dbc" /-->
+    <param name="dbw_dbc_file" textfile="$(find raptor_dbw_can)/CT_Raptor.dbc" />
     <remap from="can_tx" to="/can0/can_rx" />
     <remap from="can_rx" to="/can0/can_tx" />
   </node>

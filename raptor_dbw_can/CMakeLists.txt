@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   raptor_dbw_msgs
   can_dbc_parser
   pdu_msgs
+  do12_custom_msgs
 )
 
 catkin_package(

@@ -2,8 +2,8 @@
 <launch>
 
   <!-- DBW system -->
-  <node ns="vehicle" pkg="raptor_dbw_can" type="dbw_node" name="dbw" output="screen" >
-    <param name="dbw_dbc_file" textfile="$(find raptor_dbw_can)/New_Eagle_DBW_3.3.388.dbc" />
+  <node ns="vehicle" pkg="raptor_dbw_can" type="dbw_node" name="dbw" output="screen">
+    <param name="dbw_dbc_file" textfile="$(find raptor_dbw_can)/CT_Raptor.dbc" />
     <remap from="can_tx" to="/can0/can_rx" />
     <remap from="can_rx" to="/can0/can_tx" />
   </node>
@@ -15,7 +15,7 @@
   <node ns="can0" pkg="kvaser_interface" type="kvaser_can_bridge" name="kvaser_can_bridge">
     <param name="can_hardware_id" value="$(arg can_hardware_id)" />
     <param name="can_circuit_id" value="$(arg can_circuit_id)" />
-    <param name="can_bit_rate" value="$(arg can_bit_rate)" />  
+    <param name="can_bit_rate" value="$(arg can_bit_rate)" />
   </node>
 
   <!-- Joystick demo -->

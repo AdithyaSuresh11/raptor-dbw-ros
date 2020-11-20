@@ -34,6 +34,7 @@
  *********************************************************************/
 
 #include "JoystickDemo.h"
+#include <iostream>
 
 namespace joystick_demo
 {
@@ -62,13 +63,17 @@ JoystickDemo::JoystickDemo(ros::NodeHandle &node, ros::NodeHandle &priv_nh) : co
   data_.turn_signal_cmd = raptor_dbw_msgs::TurnSignal::NONE;
   data_.joy_accelerator_pedal_valid = false;
   data_.joy_brake_valid = false;
+  data_.supervisor1 = 0;
 
-  pub_accelerator_pedal_ = node.advertise<raptor_dbw_msgs::AcceleratorPedalCmd>("accelerator_pedal_cmd", 1);
-  pub_brake_ = node.advertise<raptor_dbw_msgs::BrakeCmd>("brake_cmd", 1);
-  pub_misc_ = node.advertise<raptor_dbw_msgs::MiscCmd>("misc_cmd", 1);
-  pub_steering_ = node.advertise<raptor_dbw_msgs::SteeringCmd>("steering_cmd", 1);
-  pub_global_enable_ = node.advertise<raptor_dbw_msgs::GlobalEnableCmd>("global_enable_cmd", 1);
-  pub_gear_ = node.advertise<raptor_dbw_msgs::GearCmd>("gear_cmd", 1);
+  // ROS PUBLISHER FOR JOYSTICK COMMANDS
+  pub_spacedrive_ = node.advertise<do12_custom_msgs::Actual_signals_sp>("spacedrive_joystick", 1);
+  
+  //pub_accelerator_pedal_ = node.advertise<raptor_dbw_msgs::AcceleratorPedalCmd>("accelerator_pedal_cmd", 1);
+  // pub_brake_ = node.advertise<raptor_dbw_msgs::BrakeCmd>("brake_cmd", 1);
+  // pub_misc_ = node.advertise<raptor_dbw_msgs::MiscCmd>("misc_cmd", 1);
+  // pub_steering_ = node.advertise<raptor_dbw_msgs::SteeringCmd>("steering_cmd", 1);
+  // pub_global_enable_ = node.advertise<raptor_dbw_msgs::GlobalEnableCmd>("global_enable_cmd", 1);
+  // pub_gear_ = node.advertise<raptor_dbw_msgs::GearCmd>("gear_cmd", 1);
   if (enable_) {
     pub_enable_ = node.advertise<std_msgs::Empty>("enable", 1);
     pub_disable_ = node.advertise<std_msgs::Empty>("disable", 1);
@@ -94,55 +99,97 @@ void JoystickDemo::cmdCallback(const ros::TimerEvent& event)
       counter_ = 0;
     }
   }
+  
+  // // Accelerator Pedal
+  // raptor_dbw_msgs::AcceleratorPedalCmd accelerator_pedal_msg;
+  // accelerator_pedal_msg.enable = true;
+  // accelerator_pedal_msg.ignore = ignore_;
+  // accelerator_pedal_msg.rolling_counter = counter_;
+  // accelerator_pedal_msg.pedal_cmd = data_.accelerator_pedal_joy * 100;
+  // accelerator_pedal_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::open_loop;
+  // pub_accelerator_pedal_.publish(accelerator_pedal_msg);
 
-  // Accelerator Pedal
-  raptor_dbw_msgs::AcceleratorPedalCmd accelerator_pedal_msg;
-  accelerator_pedal_msg.enable = true;
-  accelerator_pedal_msg.ignore = ignore_;
-  accelerator_pedal_msg.rolling_counter = counter_;
-  accelerator_pedal_msg.pedal_cmd = data_.accelerator_pedal_joy * 100;
-  accelerator_pedal_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::open_loop;
-  pub_accelerator_pedal_.publish(accelerator_pedal_msg);
+  //REFERENCING TO THE MESSAGE 
+  do12_custom_msgs::Actual_signals_sp sp_test;
+  
+  // STATIC VALUES BY BUTTONS
+  
+  sp_test.counter = 1;
+  sp_test.Gear = 1;
+  sp_test.Trigger = 0;
 
-  // Brake
-  raptor_dbw_msgs::BrakeCmd brake_msg;
-  brake_msg.enable = true;
-  brake_msg.rolling_counter = counter_;
-  brake_msg.pedal_cmd = data_.brake_joy * 100;
-  brake_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::open_loop;
-  pub_brake_.publish(brake_msg);
+  // CALCULATION FOR STEERING VALUE WITH RESPECT TO THE JOYSTICK CONTROL FULL LEFT PRESS
+  double steer_factor = 275/8.20305; // HERE THE 8.20305 IS THE FACTOR FOR JOYSTICK FULL LEFT PRESS
+ 
+  double steering_command = (data_.steering_joy * steer_factor);
 
-  // Steering
-  raptor_dbw_msgs::SteeringCmd steering_msg;
-  steering_msg.enable = true;
-  steering_msg.ignore = ignore_;
-  steering_msg.rolling_counter = counter_;
-  steering_msg.angle_cmd = data_.steering_joy;
-  steering_msg.angle_velocity = svel_;
-  steering_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::closed_loop_actuator;
-  if (!data_.steering_mult) {
-    steering_msg.angle_cmd *= 0.5;
+  double brake_command = data_.brake_joy * 1241056; // BRAKE PRESSURE VALUE OF 180 PSI IN PASCALS
+
+  sp_test.Brake = brake_command;
+  sp_test.Steering = steering_command;
+
+  // SAFETY LAYERS FOR STEERING AND BRAKE
+
+  if (steering_command >= 275) 
+  {
+    sp_test.Steering = 275;
   }
-  pub_steering_.publish(steering_msg);
+  else if (steering_command <= -275)
+  {
+    sp_test.Steering = -275;
+  }
 
-  // Gear
-  raptor_dbw_msgs::GearCmd gear_msg;
-  gear_msg.cmd.gear = data_.gear_cmd;
-  gear_msg.enable = true;
-  gear_msg.rolling_counter = counter_;
-  pub_gear_.publish(gear_msg);
+  if (brake_command >= 1241056) // FULLY PRESSED CONDITION TILL 180 PSI BRAKE PRESSURE
+  {
+    sp_test.Brake = 1241056;
+  }
+  else if (brake_command <= 0) // FULLY DEPRESSED CONDITION
+  {
+    sp_test.Brake = 0;
+  }
+  sp_test.vehicle_speed = data_.accelerator_pedal_joy * 100;
+  sp_test.Supervisor_Input_Cmd = data_.supervisor1;
+  pub_spacedrive_.publish(sp_test);
 
-  // Turn signal
-  raptor_dbw_msgs::MiscCmd misc_msg;
-  misc_msg.cmd.value = data_.turn_signal_cmd;
-  misc_msg.rolling_counter = counter_;
-  pub_misc_.publish(misc_msg);
+  // // Brake
+  // raptor_dbw_msgs::BrakeCmd brake_msg;
+  // brake_msg.enable = true;
+  // brake_msg.rolling_counter = counter_;
+  // brake_msg.pedal_cmd = data_.brake_joy * 100;
+  // brake_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::open_loop;
+  // pub_brake_.publish(brake_msg);
 
-  raptor_dbw_msgs::GlobalEnableCmd globalEnable_msg;
-  globalEnable_msg.global_enable = true;
-  globalEnable_msg.enable_joystick_limits = true;
-  globalEnable_msg.rolling_counter = counter_;
-  pub_global_enable_.publish(globalEnable_msg);
+  // // Steering
+  // raptor_dbw_msgs::SteeringCmd steering_msg;
+  // steering_msg.enable = true;
+  // steering_msg.ignore = ignore_;
+  // steering_msg.rolling_counter = counter_;
+  // steering_msg.angle_cmd = data_.steering_joy;
+  // steering_msg.angle_velocity = svel_;
+  // steering_msg.control_type.value = raptor_dbw_msgs::ActuatorControlMode::closed_loop_actuator;
+  // if (!data_.steering_mult) {
+  //   steering_msg.angle_cmd *= 0.5;
+  // }
+  // pub_steering_.publish(steering_msg);
+
+  // // Gear
+  // raptor_dbw_msgs::GearCmd gear_msg;
+  // gear_msg.cmd.gear = data_.gear_cmd;
+  // gear_msg.enable = true;
+  // gear_msg.rolling_counter = counter_;
+  // pub_gear_.publish(gear_msg);
+
+  // // Turn signal
+  // raptor_dbw_msgs::MiscCmd misc_msg;
+  // misc_msg.cmd.value = data_.turn_signal_cmd;
+  // misc_msg.rolling_counter = counter_;
+  // pub_misc_.publish(misc_msg);
+
+  // raptor_dbw_msgs::GlobalEnableCmd globalEnable_msg;
+  // globalEnable_msg.global_enable = true;
+  // globalEnable_msg.enable_joystick_limits = true;
+  // globalEnable_msg.rolling_counter = counter_;
+  // pub_global_enable_.publish(globalEnable_msg);
 }
 
 void JoystickDemo::recvJoy(const sensor_msgs::Joy::ConstPtr& msg)
@@ -152,43 +199,57 @@ void JoystickDemo::recvJoy(const sensor_msgs::Joy::ConstPtr& msg)
     ROS_ERROR("Expected %zu joy axis count, received %zu", (size_t)AXIS_COUNT, msg->axes.size());
     return;
   }
-  if (msg->buttons.size() != (size_t)BTN_COUNT) {
-    ROS_ERROR("Expected %zu joy button count, received %zu", (size_t)BTN_COUNT, msg->buttons.size());
-    return;
-  }
+  // if (msg->buttons.size() != (size_t)BTN_COUNT) {
+  //   ROS_ERROR("Expected %zu joy button count, received %zu", (size_t)BTN_COUNT, msg->buttons.size());
+  //   return;
+  // }
 
   // Handle joystick startup
   if (msg->axes[AXIS_ACCELERATOR_PEDAL] != 0.0) {
     data_.joy_accelerator_pedal_valid = true;
   }
-  if (msg->axes[AXIS_BRAKE] != 0.0) {
+  // if (msg->axes[AXIS_BRAKE] != 0.0) {
+  //   data_.joy_brake_valid = true;
+  // }
+
+  // SUPERVISOR BUTTON COMMAND REFERENCE
+
+  if (msg->buttons[0] != 0.0) data_.supervisor1 = 1;
+  if (msg->buttons[2] != 0.0) data_.supervisor1 = 2;
+  if (msg->buttons[3] != 0.0) data_.supervisor1 = 3;
+  if (msg->buttons[1] != 0.0) data_.supervisor1 = 4;
+  if (msg->buttons[6] != 0.0) data_.supervisor1 = 0;
+
+
+  if (msg->axes[2] != 0.0) {
     data_.joy_brake_valid = true;
   }
 
   // Accelerator pedal
   if (data_.joy_accelerator_pedal_valid) {
-    data_.accelerator_pedal_joy = 0.5 - 0.5 * msg->axes[AXIS_ACCELERATOR_PEDAL];
+    //data_.accelerator_pedal_joy = 0.5 - 0.5 * msg->axes[AXIS_ACCELERATOR_PEDAL];
   }
 
   // Brake
   if (data_.joy_brake_valid) {
     data_.brake_joy = 0.5 - 0.5 * msg->axes[AXIS_BRAKE];
+    // data_.brake_joy = 0.5 - 0.5 * msg->axes[5]; // for bluetooth implementation
   }
 
   // Gear
-  if (msg->buttons[BTN_PARK]) {
-    data_.gear_cmd = raptor_dbw_msgs::Gear::PARK;
-  } else if (msg->buttons[BTN_REVERSE]) {
-    data_.gear_cmd = raptor_dbw_msgs::Gear::REVERSE;
-  } else if (msg->buttons[BTN_DRIVE]) {
-    data_.gear_cmd = raptor_dbw_msgs::Gear::DRIVE;
-  } else if (msg->buttons[BTN_NEUTRAL]) {
-    data_.gear_cmd = raptor_dbw_msgs::Gear::NEUTRAL;
-  } else {
-    data_.gear_cmd = raptor_dbw_msgs::Gear::NONE;
-  }
+  // if (msg->buttons[BTN_PARK]) {
+  //   data_.gear_cmd = raptor_dbw_msgs::Gear::PARK;
+  // } else if (msg->buttons[BTN_REVERSE]) {
+  //   data_.gear_cmd = raptor_dbw_msgs::Gear::REVERSE;
+  // } else if (msg->buttons[BTN_DRIVE]) {
+  //   data_.gear_cmd = raptor_dbw_msgs::Gear::DRIVE;
+  // } else if (msg->buttons[BTN_NEUTRAL]) {
+  //   data_.gear_cmd = raptor_dbw_msgs::Gear::NEUTRAL;
+  // } else {
+  //   data_.gear_cmd = raptor_dbw_msgs::Gear::NONE;
+  // }
 
-  // Steering
+  // Steering - AXES REFERENCE FOR SP TESTING
   data_.steering_joy = 470.0 * M_PI / 180.0 * ((fabs(msg->axes[AXIS_STEER_1]) > fabs(msg->axes[AXIS_STEER_2])) ? msg->axes[AXIS_STEER_1] : msg->axes[AXIS_STEER_2]);
   data_.steering_mult = msg->buttons[BTN_STEER_MULT_1] || msg->buttons[BTN_STEER_MULT_2];
 

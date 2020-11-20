@@ -35,6 +35,7 @@
 
 #include "DbwNode.h"
 #include <raptor_dbw_can/dispatch.h>
+#include <iostream>
 
 namespace raptor_dbw_can
 {
@@ -42,6 +43,8 @@ namespace raptor_dbw_can
 DbwNode::DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
 {
   priv_nh.getParam("dbw_dbc_file", dbcFile_);
+
+  
 
   // Initialize enable state machine
   prev_enable_ = true;
@@ -72,17 +75,6 @@ DbwNode::DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
   // Buttons (enable/disable)
   buttons_ = true;
   priv_nh.getParam("buttons", buttons_);
-
-
-  // Ackermann steering parameters
-  acker_wheelbase_ = 2.8498; // 112.2 inches
-  acker_track_ = 1.5824; // 62.3 inches
-  steering_ratio_ = 14.8;
-  priv_nh.getParam("ackermann_wheelbase", acker_wheelbase_);
-  priv_nh.getParam("ackermann_track", acker_track_);
-  priv_nh.getParam("steering_ratio", steering_ratio_);
-
-  // Initialize joint states
   joint_state_.position.resize(JOINT_COUNT);
   joint_state_.velocity.resize(JOINT_COUNT);
   joint_state_.effort.resize(JOINT_COUNT);
@@ -119,6 +111,10 @@ DbwNode::DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
   pub_driver_input_ = node.advertise<raptor_dbw_msgs::DriverInputReport>("driver_input_report", 2);
   pub_misc_ = node.advertise<raptor_dbw_msgs::MiscReport>("misc_report", 2);
   pub_sys_enable_ = node.advertise<std_msgs::Bool>("dbw_enabled", 1, true);
+  pub_test_ = node.advertise<raptor_dbw_msgs::test>("test_topic_pub", 1);
+
+  // PUBLISHER LINE FOR PUBLISHING THE FEEDBACK VALUES FROM RAPTOR TO CT COMPUTER
+  pub_sp_ = node.advertise<do12_custom_msgs::Actual_signals_sp>("actual_values",10);
   publishDbwEnabled();
 
   // Set up Subscribers
@@ -131,6 +127,13 @@ DbwNode::DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
   sub_gear_ = node.subscribe("gear_cmd", 1, &DbwNode::recvGearCmd, this, ros::TransportHints().tcpNoDelay(true));
   sub_misc_ = node.subscribe("misc_cmd", 1, &DbwNode::recvMiscCmd, this, ros::TransportHints().tcpNoDelay(true));
   sub_global_enable_ = node.subscribe("global_enable_cmd", 1, &DbwNode::recvGlobalEnableCmd, this, ros::TransportHints().tcpNoDelay(true));
+  sub_test_ = node.subscribe("test_topic", 1, &DbwNode::testTxCAN, this, ros::TransportHints().tcpNoDelay(true));
+  
+  // SUBSCRIBER LINE FOR SUBSCRIBING TO THE WAYPOINT CONTROLLER'S STEERING VALUE (LINE 134)
+  // SUBSCRIBER LINE FOR SUBSCRIBING TO THE JOYSTICK'S STEERING, BRAKE AND SUPERVISOR INPUT COMMANDS (LINE 135) 
+  sub_spacedrive_ = node.subscribe("spacedrive", 1, &DbwNode::recvSPcmd, this, ros::TransportHints().tcpNoDelay(true));
+  sub_spacedrive_joy_ = node.subscribe("spacedrive_joystick", 1, &DbwNode::recvSPJOYcmd, this, ros::TransportHints().tcpNoDelay(true));
+
 
   pdu1_relay_pub_ = node.advertise<pdu_msgs::RelayCommand>("/pduB/relay_cmd", 1000);
   count_ = 0;
@@ -138,7 +141,7 @@ DbwNode::DbwNode(ros::NodeHandle &node, ros::NodeHandle &priv_nh)
   dbwDbc_ = NewEagle::DbcBuilder().NewDbc(dbcFile_);
 
   // Set up Timer
-  timer_ = node.createTimer(ros::Duration(1 / 20.0), &DbwNode::timerCallback, this);
+  timer_ = node.createTimer(ros::Duration(1), &DbwNode::timerCallback, this);
 }
 
 DbwNode::~DbwNode()
@@ -303,6 +306,24 @@ void DbwNode::recvCAN(const can_msgs::Frame::ConstPtr& msg)
       }
       break;
 
+      // THIS SWITCH CASE WILL DEAL WITH THE PUBLSHING PART OF CURRENT STEERING POSITION AS FEEDBACK TO THE ROS NETWORK
+      // IT WORKS BY GETTING THE SIGNAL FROM RAPTOR IN CAN AND PUBLISHES TO ROS TOPIC /vehicle/actual_values
+      case ID_ACTUAL_SP:
+      {
+        NewEagle::DbcMessage* message = dbwDbc_.GetMessageById(ID_ACTUAL_SP);
+        if (msg->dlc >= message->GetDlc()) {
+
+          message->SetFrame(msg);
+
+          do12_custom_msgs::Actual_signals_sp actual_sp;
+
+          actual_sp.Current_Steering_Pos = message->GetSignal("Current_Steering_Pos")->GetResult();
+          
+          pub_sp_.publish(actual_sp);
+        }
+      }
+      break;
+
       case ID_GEAR_REPORT:
       {
         NewEagle::DbcMessage* message = dbwDbc_.GetMessageById(ID_GEAR_REPORT);
@@ -366,6 +387,22 @@ void DbwNode::recvCAN(const can_msgs::Frame::ConstPtr& msg)
           out.wheel_pulses_per_rev  = message->GetSignal("DBW_WhlPulsesPerRev")->GetResult();
 
           pub_wheel_positions_.publish(out);
+        }
+      }
+      break;
+
+      case ID_TEST:
+      {
+         NewEagle::DbcMessage* message = dbwDbc_.GetMessageById(ID_TEST);
+        if (msg->dlc >= message->GetDlc()) {
+
+          message->SetFrame(msg);
+
+          raptor_dbw_msgs::test out;
+          out.test1  = message->GetSignal("test1")->GetResult();
+          out.test2 = message->GetSignal("test2")->GetResult();
+
+          pub_test_.publish(out);
         }
       }
       break;
@@ -744,6 +781,73 @@ void DbwNode::recvAcceleratorPedalCmd(const raptor_dbw_msgs::AcceleratorPedalCmd
     message->GetSignal("Akit_AccelPdlIgnoreDriverOvrd")->SetResult(1);
   }    
 
+  can_msgs::Frame frame = message->GetFrame();
+
+  pub_can_.publish(frame);
+}
+
+void DbwNode::testTxCAN(const raptor_dbw_msgs::test::ConstPtr& msg) {
+
+  NewEagle::DbcMessage* message = dbwDbc_.GetMessage("akit_test");
+  message->GetSignal("test1")->SetResult(msg->test1);
+  message->GetSignal("test2")->SetResult(msg->test2);
+  //std::cout << "message sent to can" << std::endl;
+  can_msgs::Frame frame = message->GetFrame();
+
+  pub_can_.publish(frame);
+}
+
+// SUBSCRIBER CALLBACK FUNCTION - WHICH SUBSCRIBES THE VALUE FROM WAYPOINT CONTROLLER IN SIMULINK
+// AND PUBLISHES THE VALUE TO CAN TO RAPTOR
+void DbwNode::recvSPcmd(const do12_custom_msgs::Actual_signals_sp::ConstPtr& msg) {
+
+  NewEagle::DbcMessage* message = dbwDbc_.GetMessage("CT_Cmd");
+  
+  message->GetSignal("Steering_demand")->SetResult(msg->Steering);
+
+  // SINCE TO AVOID EXCEEDING LIMITS OF STEERING VALUES WHICH COULD RESULT IN TRANSITION OF CURRENT MODE TO EMERGENCY
+  // MODE IN RAPTOR, A LIMIT FOR THRESHOLD HAS BEEN SET SO THAT THIS COULD ADD AS A SAFETY LAYER.
+
+  if (msg->Steering >=275)
+  {
+    message->GetSignal("Steering_demand")->SetResult(275);
+  }
+  else if (msg->Steering <=-275)
+  {
+    message->GetSignal("Steering_demand")->SetResult(-275);
+  }
+  
+  // INTEGER 'FLAG' HAS BEEN CREATED AND INITIALISED TO VALUE '0' IN DBWNODE CLASS - SO THAT THE STEERING VALUE FROM 
+  // BOTH WAYPOINT CONTROLLER SIMULINK AND JOYNODE DOES NOT SUBSCRIBE AT THE SAME TIME.
+
+  // IF THE FLAG IS '0' AND THE SIMULINK NODE IS LAUNCHED THE STEERING VALUES FROM WAYPOINT CONTROLLER WILL BE USED
+  // FOR STEERING. AND THE FLAG WILL BE SET AS VALUE '1'.  
+
+  flag = 1;
+  can_msgs::Frame frame = message->GetFrame();
+
+  pub_can_.publish(frame);
+}
+
+// SUBSCRIBER CALLBACK FUNCTION - WHICH SUBSCRIBES THE VALUE FROM JOYSTICK NODE IN C++
+// AND PUBLISHES THE VALUE TO CAN TO RAPTOR
+
+void DbwNode::recvSPJOYcmd(const do12_custom_msgs::Actual_signals_sp::ConstPtr& msg) {
+
+  NewEagle::DbcMessage* message = dbwDbc_.GetMessage("CT_Cmd");
+  
+  // THIS SUPERVISOR INPUT COMMAND IS USED FOR CHANGING THE STARTUP AND SHUTDOWN SEQUENCE STATES.
+
+  message->GetSignal("Supervisor_input_cmd")->SetResult(msg->Supervisor_Input_Cmd);  
+  message->GetSignal("Brake_pressure_demand")->SetResult(msg->Brake);
+  
+  // THIS FLAG 'O' ENSURES THAT EITHER JOYSTICK NODE OR SIMULINK WAYPOINT CONTROLLER CAN SEND STEERING VALUES
+  // AT THE SAME TIME.
+  if (flag == 0)
+  {
+    message->GetSignal("Steering_demand")->SetResult(msg->Steering);
+  }
+  
   can_msgs::Frame frame = message->GetFrame();
 
   pub_can_.publish(frame);
