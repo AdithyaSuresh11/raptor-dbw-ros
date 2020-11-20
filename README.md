@@ -8,7 +8,7 @@ The current development branch is `AdithyaSuresh_SP_dev` and targets ROS `kineti
 
 ## Dependency
 
-The New Eagle ROS driver works with [Kvaser interface](https://github.com/astuff/kvaser_interface) developed by the [AutonomouStuff](https://autonomoustuff.com/). Certain packages are needed to be installed to ensure the CAN transmission and reception is working in the computer system. To build and install the necessary packages:
+The New Eagle ROS driver works with [Kvaser interface](https://github.com/astuff/kvaser_interface) developed by the [AutonomouStuff](https://autonomoustuff.com/). The custom made rostopic associates to the custom made message which can be cloned from the [do12_custom_msgs](https://github.com/cuicardeeporange/do12_custom_msgs/tree/sp_dem_branch) repository. Certain packages are needed to be installed to ensure the CAN transmission and reception is working in the computer system. To build and install the necessary packages:
 
 * Download [Kvaser linux drivers and SDK](https://www.kvaser.com/download/)
 * `cd /usr/src`
