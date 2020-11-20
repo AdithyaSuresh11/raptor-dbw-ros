@@ -1,47 +1,57 @@
-# New Eagle Raptor DBW (drive-by-wire) ROS interface
+# `NEW EAGLE ROS DRIVER FOR SCHAEFFLER PARAVAN AND AUTONOMOUSTUFF DEMONSTRATION`
 
-This repository contains a collection of ROS packages, which allow DBW kit developers to quickly implement a generic ROS node for interacting with the New Eagle Raptor controller.
+This driver was forked and modified by Adithya Suresh (Perception System engineer) of Clemson University's Deep Orange 12 - Autonomous Systems team from the New Eagle ROS1 driver developed by the [New Eagle group](https://github.com/NewEagleRaptor/raptor-dbw-ros). This folder contains a collection of ROS packages, which allow DBW kit developers to quickly implement a generic ROS node for interacting with New Eagle Raptor controller. The Joystick node in the package associates Xbox One joystick controller's commands and associates with steering, brake and supervisor input commands for the startup and shutdown sequence of Spacedrive system. 
+
+The New Eagle node subscribes to the Waypoint Controller developed by Manikanda Balaji Venkatesan (Team Lead and Waypoint control engineer) and Abhishek Bhagwat (Waypoint Control engineer) and sends the steering value from the MATLAB-Simulink model (Waypoint controller) in CAN bus to the New Eagle raptor controller which in turn is passed to the spacedrive system for actuation. The Joystick node is used for input commands for startup and shutdown, safe stop by braking and steering for transportation when the Waypoint controller is not used.
 
 The current development branch is `master` and targets ROS `kinetic` and `melodic`.
 
-ROS Kinetic: [![Build Status](http://build.ros.org/buildStatus/icon?job=Kdoc__pacifica_dbw_ros__ubuntu_xenial_amd64)](http://build.ros.org/job/Kdoc__pacifica_dbw_ros__ubuntu_xenial_amd64/)
+## Dependency
 
-ROS Melodic: [![Build Status](http://build.ros.org/buildStatus/icon?job=Kdoc__pacifica_dbw_ros__ubuntu_xenial_amd64)](http://build.ros.org/job/Kdoc__pacifica_dbw_ros__ubuntu_xenial_amd64/)
+The New Eagle ROS driver works with [Kvaser interface](https://github.com/astuff/kvaser_interface) developed by the [AutonomouStuff](https://autonomoustuff.com/). Certain packages are needed to be installed to ensure the CAN transmission and reception is working in the computer system. To build and install the necessary packages:
 
-For more on New Eagle Raptor controllers see: https://store.neweagle.net/product/1793-196-1503-general-control-module-raptor/ 
+* Download [Kvaser linux drivers and SDK](https://www.kvaser.com/download/)
+* `cd /usr/src`
+* `sudo mv ~/Downloads/linuxcan.tar.gz .`
+* `sudo tar xvf linuxcan.tar.gz`
+* `cd linuxcan`
+* `sudo make`
+* `sudo make install`
+* `sudo apt install ros-[distro_version]-can-msgs` (distro - kinetic or melodic)
+* `sudo apt-add-repository ppa:astuff/kvaser-linux`
+* `sudo apt-get update`
+* `sudo apt-get install kvaser-canlib-dev kvaser-drivers-dkms`
 
-# Packages
+Disclaimer: Kvaser Driver is needed for the New Eagle driver to work. 
 
-* can_dbc_parser - module for handling everything related to translating CAN messages to ROS
-* raptor_dbw_can - DBW CAN driver
-* raptor_dbw_joystick_demo - a demo that allows you to use a game controller to interact with the DBW ROS node 
-* raptor_dbw_joystick_speed_demo - a demo that allows you to use a game controller to interact with the DBW ROS node 
-* raptor_dbw_msgs - DBW ROS message definitions
-* raptor_dbw - ROS metapackage encapsulating the other packages in this group
-* pdu - power distribution unit (PDU) driver. The PDU is a separate CAN-enabled device that's part of New Eagle's product line.
-* pdu_msg - PDU ROS message definitions
+Doing the above task will blacklist the SocketCan driver which is built-in the user's computer. If the user does not want to have Kvaser driver and wants to remove the blacklist problem, then use:
 
-# Installing and building
-## Official Release
-(Coming soon)
+* `cd /usr/src/linuxcan`
+* `sudo make`
+* `sudo make uninstall`
 
-## Building from source
-While we are working on releasing these packages through the ROS buildfarm, you can build them from source using a catkin workspace and following these steps:
+Once the drivers are installed, the user can verify the Kvaser channel which is connected to their computer/laptop by:
 
-1. Create and initialize a new catkin workspace if you don't already have one. Instructions below assume the workspace was created in catkin_ws.
-2. cd catkin_ws/src
-3. git clone https://github.com/NewEagleRaptor/pacifica-dbw-ros.git
-4. cd ..
-5. catkin_make
+* `cd /usr/doc/canlib/examples`
+* `./listChannels`
 
-# Usage
+## Installing and building
 
-## Running the joystick demo
+The user can build them from source using a catkin workspace and following these steps:
+* Create and initialize a new catkin workspace if you don't already have one. Instructions below assume the workspace was created in catkin_ws.
+* `cd catkin_ws/src`
+* `git clone https://github.com/cuicardeeporange/raptor-dbw-ros.git` (AdithyaSP_dev_branch)
+* `cd ..`
+* `catkin_make`
 
-Prerequisites:
-* a game controller compatible with the ROS [joy driver](http://wiki.ros.org/joy)
-* a Kvaser CAN adapter
+## Usage
 
-1. cd catkin_ws
-2. source devel/setup.bash
-3. roslaunch raptor_dbw_joystick_demo joystick_demo.launch
+* `roscore`
+* `roslaunch raptor_dbw_can dbw_sp.launch`
+
+For running the Joystick node: (Assuming the user has Xbox One controller)
+* `roslaunch raptor_dbw_joystick_demo joystick_demo_sp.launch`
+
+## Contributors
+* Manikanda Balaji Venkatesan (Waypoint controller)
+* Abhishek Bhagwat (Waypoint controller)
