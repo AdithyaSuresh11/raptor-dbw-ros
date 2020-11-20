@@ -4,7 +4,7 @@ This driver was forked and modified by Adithya Suresh (Perception System enginee
 
 The New Eagle node subscribes to the Waypoint Controller developed by Manikanda Balaji Venkatesan (Team Lead and Waypoint control engineer) and Abhishek Bhagwat (Waypoint Control engineer) and sends the steering value from the MATLAB-Simulink model (Waypoint controller) in CAN bus to the New Eagle raptor controller which in turn is passed to the spacedrive system for actuation. The Joystick node is used for input commands for startup and shutdown, safe stop by braking and steering for transportation when the Waypoint controller is not used.
 
-The current development branch is `master` and targets ROS `kinetic` and `melodic`.
+The current development branch is `AdithyaSuresh_SP_dev` and targets ROS `kinetic` and `melodic`.
 
 ## Dependency
 
