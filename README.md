@@ -1,6 +1,5 @@
 # `NEW EAGLE ROS DRIVER FOR SCHAEFFLER PARAVAN AND AUTONOMOUSTUFF DEMONSTRATION`
 
-## Check the branch - AdithyaSuresh_SP_dev
 This driver was forked and modified by Adithya Suresh (Perception System engineer) of Clemson University's Deep Orange 12 - Autonomous Systems team from the New Eagle ROS1 driver developed by the [New Eagle group](https://github.com/NewEagleRaptor/raptor-dbw-ros). This folder contains a collection of ROS packages, which allow DBW kit developers to quickly implement a generic ROS node for interacting with New Eagle Raptor controller. The Joystick node in the package associates Xbox One joystick controller's commands and associates with steering, brake and supervisor input commands for the startup and shutdown sequence of Spacedrive system. 
 
 The New Eagle node subscribes to the Waypoint Controller developed by Manikanda Balaji Venkatesan (Team Lead and Waypoint control engineer) and Abhishek Bhagwat (Waypoint Control engineer) and sends the steering value from the MATLAB-Simulink model (Waypoint controller) in CAN bus to the New Eagle raptor controller which in turn is passed to the spacedrive system for actuation. The Joystick node is used for input commands for startup and shutdown, safe stop by braking and steering for transportation when the Waypoint controller is not used.
